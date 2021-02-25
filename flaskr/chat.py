@@ -1,13 +1,19 @@
 from flask_socketio import join_room, send, emit, SocketIO
-from flask import session
-from flask_login import current_user
+from flask import session, request, Blueprint
+from flask_login import current_user, login_required
 socketio = SocketIO()
 
 
 @socketio.on('join')
 def on_join(data):
-    print(current_user)
-    # username = data['username']
-    # room = data['room']
-    # join_room(room)
-    # send(username + ' has entered the room.', room=room)
+    room = data['room']
+    session['room'] = room
+    join_room(room)
+    send({'user': current_user.screen_name,
+          'message': ' has entered the room.'}, room=room)
+
+
+@socketio.on('message')
+def handle_message(message):
+    send({'user': current_user.screen_name,
+          'message': message}, room=session['room'])

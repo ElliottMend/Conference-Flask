@@ -9,12 +9,17 @@ login_manager = LoginManager()
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
+@login_manager.user_loader
+def user_loader(user_id):
+    return User.query.get(int(user_id))
+
+
 @bp.route('/register', methods=['POST'])
 def register():
     data = json.loads(request.data)
     username = data['username']
     password = data['password']
-    email = data['password']
+    email = data['email']
     if not username:
         return "no username"
     if not password:
@@ -35,6 +40,7 @@ def register():
 @bp.route('/login', methods=['POST'])
 def login():
     data = json.loads(request.data)
+    print(data)
     username = data['username']
     password = data['password']
     if not username:
@@ -48,18 +54,12 @@ def login():
     elif not check_password_hash(user.password, password):
         return "incorrect password"
     else:
-        session.clear()
-        session['username'] = user.username
-        login_user(user)
+        session['username'] = username
+        login_user(user, remember=True)
         return "logged in"
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    print(user_id)
-    return User.query.filter_by(username=user_id).first()
-
-
-@bp.before_app_first_request
-def init():
-    db.create_all()
+# @bp.before_app_first_request
+# def init():
+#     db.drop_all()
+#     db.create_all()

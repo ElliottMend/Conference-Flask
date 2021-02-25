@@ -1,21 +1,26 @@
 from app import app
-from flask_session import Session
 from models import db
+import auth
+from flask_login import current_user, login_required
 from flask_socketio import SocketIO
 import chat
 from flask_cors import CORS
-from flask_login import LoginManager
-import auth
-app.config['SECRET_KEY'] = 'my_secret_key'
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
-chat.socketio.init_app(app, manage_session=False,
-                       async_mode='eventlet', cors_allowed_origins="*")
-Session(app)
-auth.login_manager.init_app(app)
+
 db.init_app(app)
-CORS(app)
+app.register_blueprint(auth.bp)
+
+chat.socketio.init_app(app, manage_session=False,
+                       async_mode='eventlet', cors_allowed_origins="http://localhost:3000")
+auth.login_manager.init_app(app)
+CORS(app, supports_credentials=True)
+
+
+@app.route('/')
+@login_required
+def index():
+    print(current_user)
+    return "sada"
+
 
 if __name__ == "__main__":
-    app.register_blueprint(auth.bp)
     chat.socketio.run(app)
