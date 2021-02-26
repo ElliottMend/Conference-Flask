@@ -21,14 +21,14 @@ def register():
     password = data['password']
     email = data['email']
     if not username:
-        return "no username"
+        return "no username", 400
     if not password:
-        return "no password"
+        return "no password", 400
     if not email:
-        return "no email"
+        return "no email", 400
     user = User.query.filter_by(username=username).first()
     if user is not None:
-        return "username is already taken"
+        return "username is already taken", 401
     else:
         save_user = User(
             username=username, password=generate_password_hash(password), email=email)
@@ -40,19 +40,18 @@ def register():
 @bp.route('/login', methods=['POST'])
 def login():
     data = json.loads(request.data)
-    print(data)
     username = data['username']
     password = data['password']
     if not username:
-        return "no username"
+        return "no username", 400
     if not password:
-        return "no password"
+        return "no password", 400
     user = User.query.filter((User.email == username)
-                             | (User.username == username)).first()
+                             | (User.username == username)).first_or_404()
     if user is None:
-        return 'user not found'
+        return 'user not found', 401
     elif not check_password_hash(user.password, password):
-        return "incorrect password"
+        return "incorrect password", 401
     else:
         session['username'] = username
         login_user(user, remember=True)

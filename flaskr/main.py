@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 db.init_app(app)
 app.register_blueprint(auth.bp)
-
+app.register_blueprint(chat.bp)
 chat.socketio.init_app(app, manage_session=False,
                        async_mode='eventlet', cors_allowed_origins="http://localhost:3000")
 auth.login_manager.init_app(app)

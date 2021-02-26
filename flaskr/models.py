@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from datetime import datetime
 db = SQLAlchemy()
 
 
@@ -26,3 +27,9 @@ class UserRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     room_id = db.Column(db.String, db.ForeignKey('room.id'))
+
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_room_id = db.Column(db.Integer, db.ForeignKey('user_room.id'))
+    datetime = db.Column(db.DateTime, default=datetime.utcnow)
