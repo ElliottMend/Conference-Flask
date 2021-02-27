@@ -2,6 +2,9 @@
     "python.linting.pylintEnabled": true,
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
-    "python.linting.pycodestyleArgs": ["--max-line-length=100"],
+    "python.linting.pycodestyleArgs": [
+        "--max-line-length=100"
+    ],
+    "python.pythonPath": "/usr/local/bin/venv/bin/python3.9",
 
 }

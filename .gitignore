@@ -1,2 +1,6 @@
 /flask_session
-/vscode
+/.vscode
+/flaskr.egg-info
+/instance
+.dockerignore
+/__pycache__

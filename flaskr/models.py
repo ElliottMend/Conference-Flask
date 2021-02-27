@@ -32,4 +32,5 @@ class UserRoom(db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_room_id = db.Column(db.Integer, db.ForeignKey('user_room.id'))
+    message = db.Column(db.String(200), nullable=False)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)

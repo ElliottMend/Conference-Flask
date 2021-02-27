@@ -1,4 +1,4 @@
-from models import User, db
+from flaskr.models import User, db
 from flask_login import login_user, LoginManager, current_user
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -34,7 +34,7 @@ def register():
             username=username, password=generate_password_hash(password), email=email)
         db.session.add(save_user)
         db.session.commit()
-        return('registered')
+        return 'registered', 200
 
 
 @bp.route('/login', methods=['POST'])
@@ -55,7 +55,7 @@ def login():
     else:
         session['username'] = username
         login_user(user, remember=True)
-        return "logged in"
+        return "logged in", 200
 
 
 # @bp.before_app_first_request

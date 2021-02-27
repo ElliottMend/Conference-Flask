@@ -2,11 +2,9 @@ from flask_socketio import join_room, send, emit, SocketIO
 from flask import session, request, Blueprint, jsonify
 from flask_login import current_user, login_required
 from datetime import datetime
-import models
+import flaskr.models
 import json
 import uuid
-import random
-import string
 bp = Blueprint('chat', __name__, url_prefix='/chat')
 
 
@@ -83,10 +81,12 @@ def on_join(data):
 
 @socketio.on('message')
 def handle_message(message):
-
-    send(
-        {
-            'user': current_user.screen_name,
-            'message': message,
-            'timestamp': getTime()
-        }, room=session['room'])
+    print('fds')
+    # user_room_id =
+    # add_message = models.Message(user_room_id=user_room_id, message=message)
+    # send(
+    #     {
+    #         'user': current_user.screen_name,
+    #         'message': message,
+    #         'timestamp': getTime()
+    #     }, room=session['room'])
