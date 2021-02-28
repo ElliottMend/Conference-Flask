@@ -1,6 +1,6 @@
 from app import create_app
-from flaskr import chat
+from flaskr.chat import socketio
 app = create_app()
 
 if __name__ == "__main__":
-    chat.socketio.run(app)
+    socketio.run(app)

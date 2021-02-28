@@ -24,3 +24,11 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
+/flask_session
+.vscode
+/flaskr.egg-info
+/instance
+.dockerignore
+/__pycache__
+.pytest_cache
+.coverage

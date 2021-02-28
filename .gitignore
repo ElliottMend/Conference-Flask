@@ -4,3 +4,7 @@
 /instance
 .dockerignore
 /__pycache__
+.pytest_cache
+.coverage
+*/flask_session
+*/instance

@@ -2,7 +2,7 @@ from flask_socketio import join_room, send, emit, SocketIO
 from flask import session, request, Blueprint, jsonify
 from flask_login import current_user, login_required
 from datetime import datetime
-import flaskr.models
+from flaskr import models
 import json
 import uuid
 bp = Blueprint('chat', __name__, url_prefix='/chat')
@@ -13,7 +13,8 @@ bp = Blueprint('chat', __name__, url_prefix='/chat')
 def create_room():
     data = json.loads(request.data)
     room_name = data['room']
-    print(room_name)
+    if room_name == "":
+        return "invalid room name", 400
     password = None
     if "password" in data is not None:
         password = data['password']
@@ -24,7 +25,7 @@ def create_room():
     models.db.session.add(new_room)
     models.db.session.add(new_user_room)
     models.db.session.commit()
-    return "room created"
+    return "room created", 200
 
 
 @bp.route('/getrooms', methods=['GET'])

@@ -5,3 +5,4 @@ flask-sqlalchemy
 flask-socketio
 flask-cors
 eventlet
+pytest
