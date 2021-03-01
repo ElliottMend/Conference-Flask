@@ -1,12 +1,25 @@
-from flask_socketio import join_room, send, emit, SocketIO
+from flask_socketio import join_room, send, emit, SocketIO, disconnect
 from flask import session, request, Blueprint, jsonify
 from flask_login import current_user, login_required
 from datetime import datetime
 from flaskr.models import User, Room, UserRoom, Message, db
 from werkzeug.security import generate_password_hash
 import json
+import functools
+import sqlalchemy
 import uuid
 bp = Blueprint('chat', __name__, url_prefix='/chat')
+
+
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        print('dsa')
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+    return wrapped
 
 
 @bp.route('/create', methods=['POST'])
@@ -42,13 +55,21 @@ def get_rooms():
 @login_required
 def get_messages():
     data = json.loads(request.data)
-    messages = Message.query\
+    messages = db.session.query(Message.datetime, Message.message, User.screen_name)\
         .join(
             UserRoom, Message.user_room_id == UserRoom.id)\
         .join(Room, Room.id == UserRoom.room_id)\
         .join(User, User.id == UserRoom.user_id)\
         .filter(Room.room_name == data['room']).all()
-    return jsonify(messages)
+    arr = []
+    for i in messages:
+        res = {
+            "timestamp": i[0],
+            "message": i[1],
+            "user": i[2]
+        }
+        arr.append(res)
+    return jsonify(arr)
 
 
 def getTime():
@@ -61,6 +82,17 @@ def getDate():
 
 socketio = SocketIO()
 
+socketio.on('connect')
+
+
+def on_connect():
+    emit('connect', {'message': 'User connected'})
+
+
+@socketio.on('disconnect')
+def on_disconnect():
+    emit('disconnect', {"message": "You were disconnected"})
+
 
 @socketio.on('join')
 def on_join(data):
@@ -70,20 +102,26 @@ def on_join(data):
             filter(UserRoom.user_id == current_user.id).\
             filter(Room.room_name == data['room']).\
             first()
-        session['room'] = room
-        join_room(room)
+        if not room:
+            emit('disconnect', {
+                "message": "You are not in a room with this name"})
+            disconnect()
+        else:
+            session['room'] = room.id
+            join_room(room.id)
+            emit('connected', data)
     else:
-        return "Not logged in", 404
+        return disconnect()
 
 
 @socketio.on('message')
-def handle_message(message):
-    print('fds')
-    # user_room_id =
-    # add_message = Message(user_room_id=user_room_id, message=message)
-    # send(
-    #     {
-    #         'user': current_user.screen_name,
-    #         'message': message,
-    #         'timestamp': getTime()
-    #     }, room=session['room'])
+def handle_message(data):
+    user_room_id = UserRoom.query.filter_by(
+        room_id=session['room']).first()
+    return_data = {"user": current_user.screen_name,
+                   "message": data['message'], "timestamp": getTime()}
+    add_message = Message(user_room_id=user_room_id.id,
+                          message=data['message'])
+    db.session.add(add_message)
+    db.session.commit()
+    emit('message sent', return_data, room=session['room'])

@@ -6,6 +6,8 @@ from flask_socketio import SocketIO
 from flaskr import auth
 from flaskr import chat
 from flask_cors import CORS
+import eventlet
+eventlet.monkey_patch()
 
 
 def create_app(test_config=None):
@@ -30,7 +32,7 @@ def create_app(test_config=None):
     Session(app)
 
     chat.socketio.init_app(app, manage_session=False,
-                           async_mode='eventlet', cors_allowed_origins="http://localhost:3000")
+                           async_mode='eventlet', cors_allowed_origins="*")
     auth.login_manager.init_app(app)
     CORS(app, supports_credentials=True)
 

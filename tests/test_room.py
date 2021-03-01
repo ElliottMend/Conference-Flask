@@ -1,6 +1,8 @@
 import pytest
 from tests.test_fixture import client, app
+from flask_socketio import SocketIOTestClient
 from tests.test_auth import register_login
+from flaskr.chat import socketio
 import json
 
 
@@ -13,6 +15,10 @@ def create_room(client, room, password):
 
 def get_rooms(client):
     return client.get('/chat/getrooms')
+
+
+def connect_socket(user_client):
+    return SocketIOTestClient(user_client, socketio)
 
 
 def test_create_room__unauthorized(client):
@@ -62,3 +68,48 @@ def test_get_rooms__multiple_rooms(client):
 def test_get_rooms_unauthorized(client):
     res = client.get('/chat/getrooms')
     assert res.status_code == 401
+
+
+def test_connect():
+    socketio_client = connect_socket(app)
+    assert socketio_client.is_connected()
+
+
+def test_disconnect():
+    socketio_client = connect_socket(app)
+    socketio_client.disconnect()
+    assert socketio_client.is_connected() == False
+
+
+def test_client_sid():
+    socketio_client1 = connect_socket(app)
+    socketio_client2 = connect_socket(app)
+    assert socketio_client1.eio_sid != socketio_client2.eio_sid
+
+
+def test_join_room__unauthorized():
+    socketio_client = connect_socket(app)
+    assert socketio_client.is_connected()
+    socketio_client.emit('join', {'room': "dgd"})
+    assert socketio_client.is_connected() == False
+
+
+def test_join_room__name(client):
+    register_login(client, 'fdsf', 'gdg')
+    create_room(client, "abc", "")
+    socketio_client = SocketIOTestClient(
+        app, socketio, flask_test_client=client)
+    assert socketio_client.is_connected()
+    socketio_client.emit('join', {'room': 'abc'})
+    received = socketio_client.get_received()
+    assert len(received) == 1
+    assert received[0]['args'][0] == {'room': 'abc'}
+
+
+def test_join_room__name_unauthorized(client):
+    register_login(client, 'fhf', 'hfh')
+    socketio_client = SocketIOTestClient(
+        app, socketio, flask_test_client=client)
+    assert socketio_client.is_connected()
+    socketio_client.emit('join', {'room': 'fds'})
+    assert socketio_client.is_connected() == False
