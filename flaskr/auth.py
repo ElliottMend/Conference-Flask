@@ -36,7 +36,6 @@ def handle_data(data):
 def register():
     if not current_user.is_authenticated:
         username, password, email = handle_data(request.data)
-
         user = db.session.query(User.email, User.username).\
             filter((User.email == email) | (User.username == username)).all()
         if len(user) > 0:
@@ -54,6 +53,7 @@ def register():
 @bp.route('/login', methods=['POST'])
 def login():
     if not current_user.is_authenticated:
+        print(request.data)
         username, password = handle_data(request.data)
         user = User.query.filter(
             (User.email == username) | (User.username == username)).first_or_404()

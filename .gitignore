@@ -8,3 +8,4 @@
 .coverage
 */flask_session
 */instance
+/docker-compose.debug.yml

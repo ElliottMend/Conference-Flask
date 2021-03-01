@@ -35,12 +35,12 @@ def test_register__no_username(client):
     assert res.status_code == 400
 
 
-def test_register__no_password(client):
+def test_register__no_username(client):
     res = register(client, "username", "", "email")
     assert res.status_code == 400
 
 
-def test_register__no_email(client):
+def test_register__no_(client):
     res = res = register(client, "username", "password", "")
     assert res.status_code == 400
 

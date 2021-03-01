@@ -1,52 +1,48 @@
 import pytest
 from tests.test_fixture import client, app
+from flask_socketio import test_client
 from tests.test_auth import register_login
+from tests.test_room import create_room, get_rooms
 import json
 
 
-def create_room(client, room, password):
-    register_login(client, "fdsf", "gdfg")
-    res = client.post('/chat/create', data=json.dumps(dict(
-        room=room,
-        password=password
+def get_messages(client, room):
+    return client.get('/chat/getmessages', data=json.dumps(dict(
+        room=room
     )))
-    return res
 
 
-def get_rooms(client):
-    register_login(client, "fdsf", "gdfg")
-    res = client.get('/chat/getrooms')
-    return res
+def create_message(client, message):
+    return client.post
 
 
-def test_create_room__unauthorized(client):
-    res = client.post('/chat/create', data=json.dumps(dict(
-        room="gfd",
-        password="hfh"
-    )))
+def test_get_messages__correct(client):
+    register_login(client, "dsa", "gfd")
+    create_room(client, "fsd", "")
+    res = get_messages(client, "fsd")
+    assert json.loads(res.data) == []
+    assert len(json.loads(res.data)) == 0
+
+
+def test_get_messages__multiple_messages(client):
+    register_login(client, "jghf", "hbvnv")
+    create_room(client, "hfgfg", "")
+    create_message(client, "hfgfg")
+    res = get_messages(client, "hfgfg")
+    assert json.loads(res.data) == [['gdf']]
+
+
+def test_get_messages__wrong_room(client):
+    register_login(client, "hg", "hfh")
+    res = get_messages(client,  "")
+    assert json.loads(res.data) == []
+    assert len(json.loads(res.data)) == 0
+
+
+def test_get_messages__unauthorized(client):
+    res = get_messages(client, "")
     assert res.status_code == 401
 
 
-def test_create_room__correct(client):
-    res = create_room(client, "room_name", "")
-    assert res.data == b"room created"
-
-
-def test_create_room__password_correct(client):
-    res = create_room(client, "room", "password")
-    assert res.data == b"room created"
-
-
-def test_create_room__incorrect(client):
-    res = create_room(client, "", "")
-    assert res.status_code == 400
-
-
-def test_get_rooms_correct(client):
-    res = get_rooms(client)
-    assert res.status_code == 200
-
-
-def test_get_rooms_unauthorized(client):
-    res = client.get('/chat/getrooms')
-    assert res.status_code == 401
+def test_create_message__correct(client):
+    ds = 2
