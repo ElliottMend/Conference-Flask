@@ -53,13 +53,16 @@ def register():
 @bp.route('/login', methods=['POST'])
 def login():
     if not current_user.is_authenticated:
-        print(request.data)
         username, password = handle_data(request.data)
+        a = User.query.first()
+        print(a.username)
+        print(username, password)
         user = User.query.filter(
             (User.email == username) | (User.username == username)).first_or_404()
         if user is None:
             return 'The Username or Email is incorrect', 401
         elif not check_password_hash(user.password, password):
+            print('password')
             return "Password is incorrect", 401
         else:
             session['username'] = username

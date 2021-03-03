@@ -1,5 +1,5 @@
 import pytest
-from tests.test_fixture import client, app
+from tests.test_fixture import client, app, auth_client
 from flask_socketio import SocketIOTestClient
 from tests.test_auth import register_login
 from flaskr.chat import socketio
@@ -29,38 +29,33 @@ def test_create_room__unauthorized(client):
     assert res.status_code == 401
 
 
-def test_create_room__correct(client):
-    register_login(client, "fdsf", "gdfg")
-    res = create_room(client, "room_name", "")
+def test_create_room__correct(auth_client):
+    res = create_room(auth_client, "room_name", "")
     assert res.data == b"room created"
 
 
-def test_create_room__password_correct(client):
-    register_login(client, "fdsf", "gdfg")
-    res = create_room(client, "room", "password")
+def test_create_room__password_correct(auth_client):
+    res = create_room(auth_client, "room", "password")
     assert res.data == b"room created"
 
 
-def test_create_room__incorrect(client):
-    register_login(client, "fdsf", "gdfg")
-    res = create_room(client, "", "")
+def test_create_room__incorrect(auth_client):
+    res = create_room(auth_client, "", "")
     assert res.status_code == 400
 
 
-def test_get_rooms__correct(client):
-    register_login(client, "fdsf", "gdfg")
-    res = get_rooms(client)
+def test_get_rooms__correct(auth_client):
+    res = get_rooms(auth_client)
     assert json.loads(res.data) == []
     assert len(json.loads(res.data)) == 0
 
 
-def test_get_rooms__multiple_rooms(client):
-    register_login(client, "fdsf", "gdfg")
-    create_room(client, "fds", "")
-    create_room(client, "fs", "")
-    create_room(client, "f", "")
-    create_room(client, "ds", "")
-    res = client.get('/chat/getrooms')
+def test_get_rooms__multiple_rooms(auth_client):
+    create_room(auth_client, "fds", "")
+    create_room(auth_client, "fs", "")
+    create_room(auth_client, "f", "")
+    create_room(auth_client, "ds", "")
+    res = auth_client.get('/chat/getrooms')
     assert json.loads(res.data) == [['fds'], ['fs'], ['f'], ['ds']]
     assert len(json.loads(res.data)) == 4
 
@@ -94,11 +89,10 @@ def test_join_room__unauthorized():
     assert socketio_client.is_connected() == False
 
 
-def test_join_room__name(client):
-    register_login(client, 'fdsf', 'gdg')
-    create_room(client, "abc", "")
+def test_join_room__name(auth_client):
+    create_room(auth_client, "abc", "")
     socketio_client = SocketIOTestClient(
-        app, socketio, flask_test_client=client)
+        app, socketio, flask_test_client=auth_client)
     assert socketio_client.is_connected()
     socketio_client.emit('join', {'room': 'abc'})
     received = socketio_client.get_received()

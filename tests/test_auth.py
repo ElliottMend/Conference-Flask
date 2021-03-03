@@ -1,5 +1,5 @@
 import pytest
-from tests.test_fixture import client, app
+from tests.test_fixture import client, app, auth_client
 import json
 
 
@@ -35,12 +35,12 @@ def test_register__no_username(client):
     assert res.status_code == 400
 
 
-def test_register__no_username(client):
+def test_register__no_password(client):
     res = register(client, "username", "", "email")
     assert res.status_code == 400
 
 
-def test_register__no_(client):
+def test_register__no_email(client):
     res = res = register(client, "username", "password", "")
     assert res.status_code == 400
 
@@ -59,11 +59,8 @@ def test_register__incorrect_email_format(client):
     assert register_user.status_code == 400
 
 
-def test_register__user_already_authenticated(client):
-    register_user = register_login(
-        client, "gdsgdf", "gdgdf"
-    )
-    register_page = register(client, "fhfgh", "gfdg", "gfdf")
+def test_register__user_already_authenticated(auth_client):
+    register_page = register(auth_client, "fhfgh", "gfdg", "gfdf")
     assert register_page.status_code == 403
 
 
@@ -101,11 +98,8 @@ def test_login__email_used_for_username(client):
     assert login_user.status_code == 200
 
 
-def test_login__user_already_authenticated(client):
-    login_user = register_login(
-        client, "gdsgdf", "gdgdf"
-    )
-    login_page = login(client, "fhfgh", "gfdg")
+def test_login__user_already_authenticated(auth_client):
+    login_page = login(auth_client, "fhfgh", "gfdg")
     assert login_page.status_code == 403
 
 
@@ -114,9 +108,6 @@ def test_logout__user_not_authenticated(client):
     assert res.status_code == 401
 
 
-def test_logout__correct(client):
-    login_user = register_login(
-        client, "email@eml.com", "mnn"
-    )
-    res = client.get('/auth/logout')
+def test_logout__correct(auth_client):
+    res = auth_client.get('/auth/logout')
     assert res.status_code == 200
