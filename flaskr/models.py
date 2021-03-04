@@ -27,6 +27,7 @@ class UserRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    private = db.Column(db.Boolean, default=False)
 
 
 class Message(db.Model):
@@ -34,3 +35,18 @@ class Message(db.Model):
     user_room_id = db.Column(db.Integer, db.ForeignKey('user_room.id'))
     message = db.Column(db.String(200), nullable=False)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    message = db.Column(db.String())
+
+
+class Inbox(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    show = db.Column(db.Boolean, default=True)

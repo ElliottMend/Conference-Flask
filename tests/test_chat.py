@@ -1,10 +1,11 @@
 import pytest
-from tests.test_fixture import client, app, auth_client
+from conftest import client, app, auth_client, auth_socketio_client
 from flask_socketio import SocketIOTestClient
 from tests.test_room import create_room, get_rooms
-from flaskr.chat import socketio
+from flaskr.room import socketio, check_user_access
 import json
 from datetime import datetime
+from werkzeug import exceptions
 
 
 def get_messages(client, room):
@@ -13,17 +14,22 @@ def get_messages(client, room):
     )))
 
 
+def test_check_user_access__correct(auth_client):
+    create_room(auth_client, "fsd", "")
+    res = check_user_access("fsd")
+    assert res[0] == 'fsd'
+
+
 def test_get_messages__correct(auth_client):
     create_room(auth_client, "fsd", "")
     res = get_messages(auth_client, "fsd")
-    assert json.loads(res.data) == []
+    assert res.status_code == 200
     assert len(json.loads(res.data)) == 0
+    assert json.loads(res.data) == []
 
 
 def test_get_messages__wrong_room(auth_client):
-    res = get_messages(auth_client,  "")
-    assert json.loads(res.data) == []
-    assert len(json.loads(res.data)) == 0
+    assert get_messages(auth_client,  "gdf").status_code == 401
 
 
 def test_get_messages__unauthorized(client):
@@ -31,30 +37,33 @@ def test_get_messages__unauthorized(client):
     assert res.status_code == 401
 
 
-def test_create_message__correct(auth_client):
-    create_room(auth_client, "ggfd", "")
-    socketio_client = SocketIOTestClient(
-        app, socketio, flask_test_client=auth_client)
-    socketio_client.emit('join', {"room": "ggfd"})
-    socketio_client.get_received()
-    socketio_client.emit('message', {"message": "gfdg"})
+def test_create_message__correct(auth_socketio_client):
+    auth_socketio_client.emit('join', {"room": "room"})
+    auth_socketio_client.get_received()
+    auth_socketio_client.emit('message', {"message": "gfdg"})
     time = datetime.now().strftime('%H:%M:%S')
-    received = socketio_client.get_received()
+    received = auth_socketio_client.get_received()
     assert len(received[0]['args'][0]) == 3
     assert received[0]['args'][0] == {
         "user": "username", "message": "gfdg", "timestamp": time}
 
 
-def test_get_messages__multiple_messages(auth_client):
-    create_room(auth_client, "ggfd", "")
-    socketio_client = SocketIOTestClient(
-        app, socketio, flask_test_client=auth_client)
-    socketio_client.emit('join', {"room": "ggfd"})
-    socketio_client.get_received()
+def test_create_message__(auth_socketio_client):
+    auth_socketio_client.emit('join', {"room": "room"})
+    auth_socketio_client.get_received()
+    auth_socketio_client.emit('message', {'message': 'dfds'})
+    received = auth_socketio_client.get_received()
+    assert len(received) > 0
+
+
+def test_get_messages__multiple_messages(auth_client, auth_socketio_client):
+    auth_socketio_client.emit('join', {"room": "room"})
+    auth_socketio_client.get_received()
     time = datetime.utcnow().strftime('%a, %d %B %Y %H:%M:%S GMT')
-    socketio_client.emit('message', {"message": "gfdg"})
-    socketio_client.emit('message', {"message": "gfdg"})
-    res = get_messages(auth_client, "ggfd")
+    auth_socketio_client.emit('message', {"message": "gfdg"})
+    auth_socketio_client.emit('message', {"message": "gfdg"})
+    res = get_messages(auth_client, "room")
+    assert len(json.loads(res.data)) == 2
     assert json.loads(res.data) == [
         {'message': 'gfdg',
          'timestamp': json.loads(res.data)[0]['timestamp'],

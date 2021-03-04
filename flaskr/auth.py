@@ -15,19 +15,17 @@ def user_loader(user_id):
 
 
 def handle_data(data):
-    data = json.loads(request.data)
+    data = json.loads(data)
     username = data["username"]
     password = data["password"]
     if not username:
-        return abort(400, Response("Username was not submitted"))
+        raise ValueError('Username was not submitted')
     if not password:
-        return abort(400, Response("Password was not submitted"))
+        raise ValueError('Password was not submitted')
     if 'email' in data:
         email = data['email']
-        if 'email' not in data:
-            return abort(400, Response("Email was not submitted"))
         if not all(string in email for string in [email, '@', '.']):
-            return abort(400, Response("The Email is an incorrect format"))
+            raise ValueError('Email is not in correct format')
         return username, password, email
     return username, password
 
@@ -47,29 +45,25 @@ def register():
             db.session.commit()
             return 'registered', 200
     else:
-        return "already logged in", 403
+        return "User is already logged in", 403
 
 
 @bp.route('/login', methods=['POST'])
 def login():
     if not current_user.is_authenticated:
         username, password = handle_data(request.data)
-        a = User.query.first()
-        print(a.username)
-        print(username, password)
         user = User.query.filter(
-            (User.email == username) | (User.username == username)).first_or_404()
+            (User.email == username) | (User.username == username)).first()
         if user is None:
             return 'The Username or Email is incorrect', 401
         elif not check_password_hash(user.password, password):
-            print('password')
             return "Password is incorrect", 401
         else:
             session['username'] = username
             login_user(user, remember=True)
             return "logged in", 200
     else:
-        return "already logged in", 403
+        return "User is already logged in", 403
 
 
 @bp.route('/logout')

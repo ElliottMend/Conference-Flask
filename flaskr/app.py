@@ -5,6 +5,7 @@ from flaskr.models import db
 from flask_socketio import SocketIO
 from flaskr import auth
 from flaskr import chat
+from flaskr import room
 from flask_cors import CORS
 import eventlet
 eventlet.monkey_patch()
@@ -28,6 +29,7 @@ def create_app(test_config=None):
         pass
     app.register_blueprint(auth.bp)
     app.register_blueprint(chat.bp)
+    app.register_blueprint(room.bp)
     db.init_app(app)
     Session(app)
 
