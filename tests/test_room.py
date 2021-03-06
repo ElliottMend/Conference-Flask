@@ -19,9 +19,17 @@ def get_rooms(client):
     return client.get('/room/getrooms')
 
 
-def join_room(client, password):
-    return client.post('/room/joinroom', data=json.dumps(dict(
+def join_room(client, room, password):
+    return client.post('/room/join_room', data=json.dumps(dict(
+        room=room,
         password=password
+    )))
+
+
+def invite_user(client, user, room):
+    return client.post('/room/invite_user', data=json.dumps(dict(
+        room=room,
+        user=user
     )))
 
 
@@ -55,38 +63,46 @@ def test_create_room__incorrect(auth_client):
     assert res.data == b'invalid room name'
 
 
-# def test_invite_room__correct(auth_client):
-#     res = invite_user(auth_client, "user")
-#     assert res.status_code == 200
-#     assert res.data == b'User was successfully invited'
+def test_invite_room__correct(client_no_context, auth_client):
+    register_login(client_no_context, "fdsf", "fdsvcxvfsd")
+    create_room(auth_client, "room", "")
+    res = invite_user(auth_client, "1", "room")
+    assert res.status_code == 200
+    assert res.data == b'User was successfully invited'
 
 
-# def test_invite_room__incorrect(auth_client):
-#     res = invite_user(auth_client, "")
-#     assert res.status_code == 400
-#     assert res.data == b'Incorrect username'
+def test_invite_room__incorrect_user(auth_client):
+    res = invite_user(auth_client, "", "room")
+    assert res.status_code == 403
+    assert res.data == b'User does not exist'
 
 
-# def test_invite_room__unauthorized(client):
-#     res = invite_user(client, "user")
-#     assert res.status_code == 401
+def test_invite_room__incorrect_room(auth_client):
+    res = invite_user(auth_client, "", "room")
+    assert res.status_code == 401
+    assert res.data == b'Not Authorized'
 
 
-# def test_join_room__correct(auth_client):
-#     res = join_room(auth_client, "password")
-#     assert res.status_code == 200
-#     assert res.data == b"You have joined the room"
+def test_invite_room__unauthorized(client):
+    res = invite_user(client, "user", "room")
+    assert res.status_code == 401
 
 
-# def test_join_room__incorrect(auth_client):
-#     res = join_room(auth_client, "cbcb")
-#     assert res.status_code == 403
-#     assert res.data == b"Incorrect password"
+def test_join_room__correct(auth_client):
+    res = join_room(auth_client, "room", "password")
+    assert res.status_code == 200
+    assert res.data == b"You have joined the room"
 
 
-# def test_join_room__unauthorized(client):
-#     res == join_room(client, "password")
-#     assert res.status == 401
+def test_join_room__incorrect(auth_client):
+    res = join_room(auth_client, "", "cbcb")
+    assert res.status_code == 403
+    assert res.data == b"Incorrect password"
+
+
+def test_join_room__unauthorized(client):
+    res = join_room(client, "room", "password")
+    assert res.status == 401
 
 
 def test_get_rooms__correct(auth_client):
@@ -121,9 +137,11 @@ def test_disconnect(auth_socketio_client):
     assert auth_socketio_client.is_connected() == False
 
 
-def test_client_sid(auth_client):
-    socketio_client1 = connect_socket(app, auth_client)
-    socketio_client2 = connect_socket(app, auth_client)
+def test_client_sid(client_no_context):
+    register_login(client_no_context, "fdsf", "fdsvcxvfsd")
+    socketio_client2 = connect_socket(app, client_no_context)
+    register_login(client_no_context, "fdsds", "fdsfsd")
+    socketio_client1 = connect_socket(app, client_no_context)
     assert socketio_client1.eio_sid != socketio_client2.eio_sid
     socketio_client1.disconnect()
     socketio_client2.disconnect()
@@ -136,15 +154,11 @@ def test_connect_to_room__unauthorized(auth_socketio_client):
         assert auth_socketio_client.is_connected() == False
 
 
-def test_connect_to_room__mock_name_correct(auth_socketio_client):
+def test_connect_to_room__name_correct(auth_socketio_client):
     auth_socketio_client.emit('join', {'room': 'room'})
     received = auth_socketio_client.get_received()
-    m = MagicMock()
-    m = 'GDSGDGD8788dfg'
-    received[0]['args'][0]['active'][0]['session'] = m
     assert len(received) == 1
-    assert received[0]['args'][0]['active'] == [
-        {'username': 'username', 'session': m}]
+    assert received[0]['args'][0] == {'username': 'username', 'user_id': 1}
 
 
 def test_connect_to_room__name_unauthorized(auth_socketio_client):

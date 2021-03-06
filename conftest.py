@@ -43,6 +43,14 @@ def client():
     SQLAlchemyTest.delete_db()
 
 
+@pytest.fixture(scope="function")
+def client_no_context():
+    with app.test_client() as client:
+        SQLAlchemyTest.set_up_db()
+        return client
+    SQLAlchemyTest.delete_db()
+
+
 @pytest.fixture
 def auth_client(client):
     SQLAlchemyTest.load_data()
@@ -57,11 +65,10 @@ def auth_client(client):
 def auth_socketio_client(auth_client):
     auth_client.post('/room/create', data=json.dumps(dict(
         room='room',
-        password=''
+        password='',
     )))
     so = SocketIOTestClient(
         app, socketio, flask_test_client=auth_client)
     yield so
-    print('disconnect')
     if so.is_connected():
         so.disconnect()

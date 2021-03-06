@@ -1,14 +1,15 @@
-from flask import Flask
-from flask_session import Session
-import os
-from flaskr.models import db
-from flask_socketio import SocketIO
-from flaskr import auth
-from flaskr import chat
-from flaskr import room
+import redis
 from flask_cors import CORS
+from flaskr import room
+from flaskr import chat
+from flaskr import auth
+from flask_socketio import SocketIO
+from flaskr.models import db
+import os
+from flask_session import Session
+from flask import Flask
 import eventlet
-eventlet.monkey_patch()
+eventlet.monkey_patch(thread=True)
 
 
 def create_app(test_config=None):
@@ -16,9 +17,11 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY="my_secret_key",
         SQLALCHEMY_DATABASE_URI='sqlite:////tmp/test.db',
-        SESSION_TYPE='filesystem',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False
+        SESSION_TYPE='redis',
+        SESSION_REDIS=redis.from_url('redis://localhost:6379'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
+
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)
     else:
@@ -31,10 +34,11 @@ def create_app(test_config=None):
     app.register_blueprint(chat.bp)
     app.register_blueprint(room.bp)
     db.init_app(app)
+
     Session(app)
 
-    chat.socketio.init_app(app, manage_session=False,
-                           async_mode='eventlet', cors_allowed_origins="*")
+    chat.socketio.init_app(app, manage_session=False, async_mode="eventlet",
+                           cors_allowed_origins="*")
     auth.login_manager.init_app(app)
     CORS(app, supports_credentials=True)
 

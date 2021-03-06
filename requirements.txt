@@ -6,3 +6,5 @@ flask-socketio
 flask-cors
 eventlet
 pytest
+redis
+rq

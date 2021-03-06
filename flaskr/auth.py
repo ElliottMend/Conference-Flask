@@ -59,7 +59,6 @@ def login():
         elif not check_password_hash(user.password, password):
             return "Password is incorrect", 401
         else:
-            session['username'] = username
             login_user(user, remember=True)
             return "logged in", 200
     else:
@@ -73,7 +72,8 @@ def logout():
     logout_user()
     return "logged out"
 
+
 # @bp.before_app_first_request
 # def init():
-#     db.drop_all()
+#     # db.drop_all()
 #     db.create_all()

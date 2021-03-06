@@ -1,11 +1,14 @@
 /.vscode
 **/flask_session
 **/instance
-**.pyc
+*.pyc
+*.rdb
+*.cpython-39.pyc
 # Byte-compiled / optimized / DLL files
 **/__pycache__
 *.py[cod]
 *$py.class
+*.cpython
 
 # C extensions
 *.so

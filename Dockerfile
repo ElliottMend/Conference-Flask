@@ -1,24 +1,15 @@
-# For more information, please refer to https://aka.ms/vscode-docker-python
 FROM python:3.8-slim-buster
 
 EXPOSE 5000
 
-# Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
-
-# Turns off buffering for easier container logging
+ENV FLASK_APP=flaskr/main.py
 ENV PYTHONUNBUFFERED=1
-
-# Install pip requirements
+ENV FLASK_ENV=development
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
+WORKDIR /code
+ENV PYTHONPATH=/code
+COPY . .
 
-WORKDIR /app
-COPY . /app
-
-# Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
-RUN useradd appuser && chown -R appuser /app
-USER appuser
-
-# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "flaskr.main:app"]
+ENTRYPOINT [ "python3", "flaskr/main.py" ]

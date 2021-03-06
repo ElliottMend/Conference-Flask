@@ -5,7 +5,7 @@ from flask_socketio import emit, rooms
 from flaskr.room import socketio, check_user_access
 from flaskr.models import User, Room, UserRoom, Message, db
 import json
-
+import redis
 bp = Blueprint('chat', __name__, url_prefix='/chat')
 
 

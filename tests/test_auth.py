@@ -13,19 +13,11 @@ def register(client, username, password, email):
     )), follow_redirects=True)
 
 
-def mock_register(client, username, password, email):
-    return 200
-
-
 def login(client, username, password):
     return client.post('/auth/login', data=json.dumps(dict(
         username=username,
         password=password
     )), follow_redirects=True)
-
-
-def mock_login(client, username, password):
-    return 200
 
 
 def register_login(client, username, password):
@@ -84,10 +76,6 @@ def test_handle_data__wrong_email_format():
         )))
 
 
-def test_mock_register__correct(client):
-    assert mock_register(client, 'username', 'pass', 'email@email.com') == 200
-
-
 def test_register__correct(client):
     res = register(
         client, "username", "pass", "email@email.com"
@@ -108,10 +96,6 @@ def test_login__correct(client):
     )
     assert res.data == b"logged in"
     assert res.status_code == 200
-
-
-def test_mock_login__correct(client):
-    assert mock_login(client, 'User', "pass") == 200
 
 
 def test_login__password_does_not_match(client):

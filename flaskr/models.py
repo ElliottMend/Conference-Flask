@@ -47,6 +47,7 @@ class Note(db.Model):
 
 class Inbox(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    received_user = db.Column(db.Integer, db.ForeignKey('user.id'))
     room_id = db.Column(db.String, db.ForeignKey('room.id'))
     show = db.Column(db.Boolean, default=True)
+    sent_user = db.Column(db.Integer, db.ForeignKey('user.id'))
