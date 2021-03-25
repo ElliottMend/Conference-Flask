@@ -48,19 +48,19 @@ def test_create_room__unauthorized(client):
 def test_create_room__correct(auth_client):
     res = create_room(auth_client, "room_name", "")
     assert res.status_code == 200
-    assert res.data == b"room created"
+    assert res.data == b"Room created"
 
 
 def test_create_room__password_correct(auth_client):
     res = create_room(auth_client, "room", "password")
     assert res.status_code == 200
-    assert res.data == b"room created"
+    assert res.data == b"Room created"
 
 
 def test_create_room__incorrect(auth_client):
     res = create_room(auth_client, "", "")
     assert res.status_code == 400
-    assert res.data == b'invalid room name'
+    assert res.data == b'Invalid room name'
 
 
 def test_invite_room__correct(client_no_context, auth_client):
@@ -102,7 +102,7 @@ def test_join_room__incorrect(auth_client):
 
 def test_join_room__unauthorized(client):
     res = join_room(client, "room", "password")
-    assert res.status == 401
+    assert res.status == "401 UNAUTHORIZED"
 
 
 def test_get_rooms__correct(auth_client):
@@ -158,7 +158,7 @@ def test_connect_to_room__name_correct(auth_socketio_client):
     auth_socketio_client.emit('join', {'room': 'room'})
     received = auth_socketio_client.get_received()
     assert len(received) == 1
-    assert received[0]['args'][0] == {'username': 'username', 'user_id': 1}
+    assert received[0]['args'][0] == ['username']
 
 
 def test_connect_to_room__name_unauthorized(auth_socketio_client):

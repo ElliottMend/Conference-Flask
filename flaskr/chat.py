@@ -14,7 +14,7 @@ bp = Blueprint('chat', __name__, url_prefix='/chat')
 def get_messages():
     data = json.loads(request.data)
     room = check_user_access(data['room'])
-    messages = db.session.query(Message.datetime, Message.message, User.screen_name)\
+    messages = db.session.query(Message.datetime, Message.message, User.username)\
         .join(UserRoom, Message.user_room_id == UserRoom.id)\
         .join(Room, Room.id == UserRoom.room_id)\
         .join(User, User.id == UserRoom.user_id)\
@@ -38,7 +38,7 @@ def getTime():
 def handle_message(data):
     user_room_id = UserRoom.query.filter_by(
         room_id=session['room']).first()
-    return_data = {"user": current_user.screen_name,
+    return_data = {"user": current_user.username,
                    "message": data['message'], "timestamp": getTime()}
     add_message = Message(user_room_id=user_room_id.id,
                           message=data['message'])
