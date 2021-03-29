@@ -5,6 +5,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 import json
+import functools
 login_manager = LoginManager()
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -12,6 +13,15 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 @login_manager.user_loader
 def user_loader(user_id):
     return User.query.get(int(user_id))
+
+
+def login_not_required(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if current_user.is_authenticated:
+            return "User is already logged in", 401
+        return f(*args, **kwargs)
+    return wrapped
 
 
 def handle_data(data):
@@ -30,43 +40,45 @@ def handle_data(data):
     return username, password
 
 
-@bp.route('/register', methods=['POST'])
+@ bp.route('/register', methods=['POST'])
+@ login_not_required
 def register():
-    if not current_user.is_authenticated:
-        username, password, email = handle_data(request.data)
-        user = db.session.query(User.email, User.username).\
-            filter((User.email == email) | (User.username == username)).all()
-        if len(user) > 0:
-            return "Username or Email is already taken", 400
-        else:
-            save_user = User(
-                username=username, password=generate_password_hash(password), email=email)
-            db.session.add(save_user)
-            db.session.commit()
-            return 'registered', 200
+    username, password, email = handle_data(request.data)
+    user = db.session.query(User.email, User.username).\
+        filter((User.email == email) | (User.username == username)).all()
+    if len(user) > 0:
+        return "Username or Email is already taken", 400
     else:
-        return "User is already logged in", 403
+        save_user = User(
+            username=username, password=generate_password_hash(password), email=email)
+        db.session.add(save_user)
+        db.session.commit()
+        return 'You have successfully registered', 200
 
 
-@bp.route('/login', methods=['POST'])
+@ bp.route('/login', methods=['POST'])
+@ login_not_required
 def login():
-    if not current_user.is_authenticated:
-        username, password = handle_data(request.data)
-        user = User.query.filter(
-            (User.email == username) | (User.username == username)).first()
-        if user is None:
-            return 'The Username or Email is incorrect', 401
-        elif not check_password_hash(user.password, password):
-            return "Password is incorrect", 401
-        else:
-            login_user(user, remember=True)
-            return "logged in", 200
+    username, password = handle_data(request.data)
+    user = User.query.filter(
+        (User.email == username) | (User.username == username)).first()
+    if user is None:
+        return 'The Username or Email is incorrect', 400
+    elif not check_password_hash(user.password, password):
+        return "Password is incorrect", 400
     else:
-        return "User is already logged in", 403
+        login_user(user, remember=True)
+        return "logged in", 200
 
 
-@bp.route('/logout')
+@bp.route("/verify", methods=["GET"])
 @login_required
+def verify():
+    return 200
+
+
+@ bp.route('/logout', methods=["GET"])
+@ login_required
 def logout():
     session.clear()
     logout_user()

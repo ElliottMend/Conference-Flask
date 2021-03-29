@@ -1,0 +1,131 @@
+@startuml
+class login_required{
+    +login_required()
+    --
+    <color:green>200</color>
+    <color:red>401</color>
+}
+
+class login_not_required{
+    +login_not_required()
+    --
+    <color:green>200</color>
+    <color:red>401:"User is already logged in"</color>
+}
+
+
+circle Redis
+circle Websocket
+circle App
+namespace auth{
+    class auth.login{
+        +login()
+        --
+        username: string
+        password: string
+        --
+        <color:green>200:"Successfully Logged In"</color>
+        <color:red>400:"Password is incorrect"</color>
+        <color:red>400:"The Username or Email is incorrect"</color>
+    }
+        
+    class auth.register{
+        +register()
+        --
+        username: string
+        password: string
+        email: string
+        --
+        <color:green>200: "You have successfully registered"</color>
+        <color:red>400:"Username or Email is already taken"</color>
+    }
+
+    class auth.handle_data{
+        +handle_data(username:string, password:string,email?:string)
+        --
+        <color:red>!username: "Username was not submitted"</color>
+        <color:red>!password: "Password was not submitted</color>
+        if email:
+            \tif not email, "@" or ".":<color:red>Email is not in correct format</color>
+            \t<color:green>username,password,email</color>
+        <color:green>username, password</color>
+    }
+
+    class auth.logout{
+        +logout()
+        --
+        <color:green>200:"Logged out Successfully"</color>
+    }
+
+    .login_not_required --|> auth.register: Request
+    .login_not_required --|> auth.login : Request
+    .login_required --|> auth.logout : Request
+    auth.login -- auth.handle_data : username, password, email
+    auth.register -- auth.handle_data : username, password
+}   
+namespace room{
+    class create{
+        +create()
+        --
+        room: string
+        password?: string
+        --
+        <color:green>200:"Room created"</color>
+        <color:red>400:"Invalid room name"</color>
+    }
+    class invite_user{
+        +invite_to_room()
+        --
+        room: string
+        user: string
+        --
+        <color:green>200:"User was successfully invited"</color>
+        <color:red>403:"User does not exist"</color>
+    }
+    class new_room{
+        +new_room_created()
+    }
+    class join_room{
+        +join_new_room()
+    }
+    class getrooms{
+        +get_rooms()
+        --
+        <color:green>200:Array of rooms</color>
+    }
+    class join{
+        +on_join()
+        --
+        room: string
+        --
+        <color:green>emit: Array of users</color>
+    }
+    class check_user_access{
+        +check_user_access()
+        --
+        room_name: string
+        --
+        <color:green>200:Query</color>
+        <color:red>401: "Not authorized</color>
+    }
+    class authenticated_only{
+        +authenticated_only()
+        --
+        <color:green>return</color>
+        <color:red>disconnect</color>
+    }
+    .login_required --|> room.create
+    .login_required --|> room.invite_user
+    .login_required --|> room.join_room
+    .login_required --|> room.getrooms
+    .Websocket --|> room.authenticated_only
+    room.authenticated_only --|> room.join
+    room.join -- room.check_user_access
+}
+
+Client --|> App : Request
+App --|> login_required : Request
+App --|> login_not_required : Request
+App -- Redis : Sessions
+Websocket -- Redis: WSSessions
+@enduml

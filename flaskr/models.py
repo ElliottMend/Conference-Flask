@@ -4,17 +4,11 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
-def default_screen_name(context):
-    return context.get_current_parameters()['username']
-
-
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
     password = db.Column(db.String(60), unique=True, nullable=False)
     email = db.Column(db.String(80), unique=True, nullable=False)
-    screen_name = db.Column(db.String(40), nullable=False,
-                            default=default_screen_name)
 
 
 class Room(db.Model):

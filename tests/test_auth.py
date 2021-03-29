@@ -80,14 +80,14 @@ def test_register__correct(client):
     res = register(
         client, "username", "pass", "email@email.com"
     )
-    assert res.data == b"registered"
+    assert res.data == b"You have successfully registered"
     assert res.status_code == 200
 
 
 def test_register__user_already_authenticated(auth_client):
     res = register(auth_client, "fhfgh", "gfdg", "gfdf")
     assert res.data == b'User is already logged in'
-    assert res.status_code == 403
+    assert res.status_code == 401
 
 
 def test_login__correct(client):
@@ -106,7 +106,7 @@ def test_login__password_does_not_match(client):
         client, "dsffds", "pass"
     )
     assert res.data == b'Password is incorrect'
-    assert res.status_code == 401
+    assert res.status_code == 400
 
 
 def test_login__username_does_not_match(client):
@@ -117,7 +117,7 @@ def test_login__username_does_not_match(client):
         client, "22222", "fds@fsdf.com"
     )
     assert res.data == b'The Username or Email is incorrect'
-    assert res.status_code == 401
+    assert res.status_code == 400
 
 
 def test_login__email_used_for_username(client):
@@ -131,7 +131,7 @@ def test_login__email_used_for_username(client):
 def test_login__user_already_authenticated(auth_client):
     res = login(auth_client, "fhfgh", "gfdg")
     assert res.data == b'User is already logged in'
-    assert res.status_code == 403
+    assert res.status_code == 401
 
 
 def test_logout__user_not_authenticated(client):
