@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pytest
-from flaskr.models import db, User
+from flaskr.models import db, Users
 from flask.testing import FlaskClient
 from flaskr.app import create_app
 from flask_socketio import SocketIOTestClient
@@ -18,8 +18,8 @@ class SQLAlchemyTest():
 
     def load_data():
         db.create_all()
-        user = User(username="username", password=generate_password_hash("password"),
-                    email="email@email.com")
+        user = Users(username="username", password=generate_password_hash("password"),
+                     email="email@email.com")
         db.session.add(user)
         db.session.commit()
 
@@ -63,8 +63,8 @@ def auth_client(client):
 
 @pytest.fixture
 def auth_socketio_client(auth_client):
-    auth_client.post('/room/create', data=json.dumps(dict(
-        room='room',
+    auth_client.post('/servers/create_server', data=json.dumps(dict(
+        server='server',
         password='',
     )))
     so = SocketIOTestClient(

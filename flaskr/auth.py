@@ -1,4 +1,4 @@
-from flaskr.models import User, db
+from flaskr.models import Users, db
 from flask_login import login_user, LoginManager, login_required, current_user, logout_user
 from flask import (
     Blueprint, redirect, abort, request, session, Response
@@ -12,7 +12,7 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @login_manager.user_loader
 def user_loader(user_id):
-    return User.query.get(int(user_id))
+    return Users.query.get(int(user_id))
 
 
 def login_not_required(f):
@@ -26,7 +26,7 @@ def login_not_required(f):
 
 def handle_data(data):
     data = json.loads(data)
-    username = data["username"]
+    username = data['username']
     password = data["password"]
     if not username:
         raise ValueError('Username was not submitted')
@@ -44,12 +44,12 @@ def handle_data(data):
 @ login_not_required
 def register():
     username, password, email = handle_data(request.data)
-    user = db.session.query(User.email, User.username).\
-        filter((User.email == email) | (User.username == username)).all()
+    user = db.session.query(Users.email, Users.username).\
+        filter((Users.email == email) | (Users.username == username)).all()
     if len(user) > 0:
         return "Username or Email is already taken", 400
     else:
-        save_user = User(
+        save_user = Users(
             username=username, password=generate_password_hash(password), email=email)
         db.session.add(save_user)
         db.session.commit()
@@ -60,8 +60,8 @@ def register():
 @ login_not_required
 def login():
     username, password = handle_data(request.data)
-    user = User.query.filter(
-        (User.email == username) | (User.username == username)).first()
+    user = Users.query.filter(
+        (Users.email == username) | (Users.username == username)).first()
     if user is None:
         return 'The Username or Email is incorrect', 400
     elif not check_password_hash(user.password, password):
@@ -85,7 +85,7 @@ def logout():
     return "logged out"
 
 
-# @bp.before_app_first_request
-# def init():
-#     # db.drop_all()
-#     db.create_all()
+@bp.before_app_first_request
+def init():
+    # db.drop_all()
+    db.create_all()

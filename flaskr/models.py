@@ -4,44 +4,44 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
-class User(UserMixin, db.Model):
+class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
-    password = db.Column(db.String(60), unique=True, nullable=False)
+    password = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(80), unique=True, nullable=False)
 
 
-class Room(db.Model):
-    id = db.Column(db.String(40), primary_key=True)
-    room_name = db.Column(db.String(60), nullable=False)
-    room_password = db.Column(db.String(40), nullable=True)
+class Servers(db.Model):
+    id = db.Column(db.String(80), primary_key=True)
+    server_name = db.Column(db.String(60), nullable=False)
+    server_password = db.Column(db.String(100), nullable=True)
 
 
-class UserRoom(db.Model):
+class UserServers(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    server_id = db.Column(db.String, db.ForeignKey('servers.id'))
     private = db.Column(db.Boolean, default=False)
 
 
-class Message(db.Model):
+class Messages(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_room_id = db.Column(db.Integer, db.ForeignKey('user_room.id'))
+    user_server_id = db.Column(db.Integer, db.ForeignKey('user_servers.id'))
     message = db.Column(db.String(200), nullable=False)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class Note(db.Model):
+class Notes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    server_id = db.Column(db.String, db.ForeignKey('servers.id'))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     message = db.Column(db.String())
 
 
-class Inbox(db.Model):
+class Inboxs(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    received_user = db.Column(db.Integer, db.ForeignKey('user.id'))
-    room_id = db.Column(db.String, db.ForeignKey('room.id'))
+    received_user = db.Column(db.Integer, db.ForeignKey('users.id'))
+    server_id = db.Column(db.String, db.ForeignKey('servers.id'))
     show = db.Column(db.Boolean, default=True)
-    sent_user = db.Column(db.Integer, db.ForeignKey('user.id'))
+    sent_user = db.Column(db.Integer, db.ForeignKey('users.id'))

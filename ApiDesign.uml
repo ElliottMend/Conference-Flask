@@ -63,47 +63,47 @@ namespace auth{
     auth.login -- auth.handle_data : username, password, email
     auth.register -- auth.handle_data : username, password
 }   
-namespace room{
+namespace Server{
     class create{
         +create()
         --
-        room: string
+        Server: string
         password?: string
         --
-        <color:green>200:"Room created"</color>
-        <color:red>400:"Invalid room name"</color>
+        <color:green>200:"Server created"</color>
+        <color:red>400:"Invalid Server name"</color>
     }
     class invite_user{
-        +invite_to_room()
+        +invite_to_server()
         --
-        room: string
+        Server: string
         user: string
         --
         <color:green>200:"User was successfully invited"</color>
         <color:red>403:"User does not exist"</color>
     }
-    class new_room{
-        +new_room_created()
+    class new_server{
+        +new_server_created()
     }
-    class join_room{
-        +join_new_room()
+    class join_server{
+        +join_new_server()
     }
-    class getrooms{
-        +get_rooms()
+    class getServers{
+        +get_servers()
         --
-        <color:green>200:Array of rooms</color>
+        <color:green>200:Array of servers</color>
     }
     class join{
         +on_join()
         --
-        room: string
+        Server: string
         --
         <color:green>emit: Array of users</color>
     }
     class check_user_access{
         +check_user_access()
         --
-        room_name: string
+        Server_name: string
         --
         <color:green>200:Query</color>
         <color:red>401: "Not authorized</color>
@@ -114,13 +114,13 @@ namespace room{
         <color:green>return</color>
         <color:red>disconnect</color>
     }
-    .login_required --|> room.create
-    .login_required --|> room.invite_user
-    .login_required --|> room.join_room
-    .login_required --|> room.getrooms
-    .Websocket --|> room.authenticated_only
-    room.authenticated_only --|> room.join
-    room.join -- room.check_user_access
+    .login_required --|> Server.create
+    .login_required --|> Server.invite_user
+    .login_required --|> Server.join_server
+    .login_required --|> Server.getServers
+    .Websocket --|> Server.authenticated_only
+    Server.authenticated_only --|> Server.join
+    Server.join -- Server.check_user_access
 }
 
 Client --|> App : Request
