@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash
 from flaskr.models import Inboxs, Messages, Servers, Users, UserServers, db
 from flaskr.worker import connect
 
-bp = Blueprint('servers', __name__, url_prefix='/servers')
+bp = Blueprint('server', __name__, url_prefix='/server')
 
 socketio = SocketIO()
 
@@ -19,7 +19,7 @@ socketio = SocketIO()
 def check_user_access(data):
     query = db.session.query(Servers.server_name, Servers.id)\
         .join(UserServers, UserServers.server_id == Servers.id)\
-        .filter(Servers.server_name == data)\
+        .filter(Servers.id == data)\
         .filter(UserServers.user_id == current_user.id).first()
     if not query:
         abort(401, description="Not authorized")
@@ -39,16 +39,26 @@ def authenticated_only(f):
 
 def user_join_room(user, sid, server):
     join_room(server)
-    data = json.dumps(
-        {'user_id': user.id, "username": user.username, "sid": sid})
-    connect.hset('server_users', server, data)
+    data = json.dumps({'user_id': user.id, "username": user.username})
+    connect.hset('room_users', f"{server}:{sid}", data)
 
 
 def get_users_in_server(server):
-    users = db.session.query(Users.id)\
+    return db.session.query(Users.id)\
         .join(UserServers, UserServers.user_id == Users.id)\
         .filter(UserServers.server_id == server).all()
-    return users
+
+
+def get_users_in_room(room):
+    users_scan = connect.hscan("room_users", 0, "*" + room + ":*")[1]
+    user_array = []
+    for users in users_scan.items():
+        if users[0].removeprefix(room + ':') == request.sid:
+            continue
+        user = {"sid": users[0].removeprefix(
+            room + ':'), "username": json.loads(users[1])['username'], "user_id": json.loads(users[1])['user_id']}
+        user_array.append(user)
+    return user_array
 
 
 def connected_users_hook(action):
@@ -134,6 +144,21 @@ def get_servers():
     return jsonify(server)
 
 
+@ bp.route('/get_users/<server_id>', methods=["GET"])
+def get_users(server_id):
+    users_in_room = list(get_users_in_server(server_id)[0])
+    online_users = []
+    for index, user_id in enumerate(users_in_room):
+        u = connect.hget('active_users', user_id)
+        if json.loads(u)['username']:
+            online_users.append(json.loads(u)['username'])
+            del users_in_room[index]
+    usernames = db.session.query(Users.username)\
+        .filter(Users.id.in_(users_in_room)).all()
+    users = {"users": list(usernames), "online": online_users}
+    return jsonify(users)
+
+
 @ socketio.on('connect')
 @ connected_users_hook('connect')
 def user_connect():
@@ -159,18 +184,14 @@ def new_inbox(data):
 
 @ socketio.on('join_room')
 @ authenticated_only
-def on_join(data):
-    server = check_user_access(data['server'])
-    session['server'] = server[1]
-    user_join_room(current_user, request.sid, server[1])
-    users = get_users_in_server(server[1])
-    arr = []
-    for i, v in enumerate(users):
-        user = json.loads(connect.hget('active_users', v[i]))
-        arr.append(user['username'])
-    emit('connected', arr)
+def join(data):
+    # server = check_user_access(data['room'])
+    user_join_room(current_user, request.sid, data['room'])
+    emit('connected')
 
 
-@socketio.on('leave_server')
-def leave_server():
-    pass
+@socketio.on('leave_room')
+def leave(data):
+    leave_room(data['room'])
+    connect.hdel('room_users', f"{data['room']}:{request.sid}")
+    emit("user_left_room")

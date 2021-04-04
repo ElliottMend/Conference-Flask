@@ -3,31 +3,38 @@ from conftest import client, app, auth_client
 from flask_socketio import SocketIOTestClient
 from tests.test_auth import register_login
 from flaskr.chat import socketio
+from flaskr.servers import check_user_access
 import json
 from unittest.mock import MagicMock
 from werkzeug import exceptions
 
 
 def create_server(client, server, password):
-    return client.post('/servers/create_server', data=json.dumps(dict(
+    return client.post('/server/create_server', data=json.dumps(dict(
         server=server,
         password=password
     )))
 
 
 def get_servers(client):
-    return client.get('/servers/get_servers')
+    return client.get('/server/get_servers')
 
 
 def join_server(client, server, password):
-    return client.post('/servers/join_server', data=json.dumps(dict(
+    return client.post('/server/join_server', data=json.dumps(dict(
         server=server,
         password=password
     )))
 
 
+def test_check_user_access__correct(auth_client):
+    create_server(auth_client, "fsd", "")
+    res = check_user_access("fsd")
+    assert res[0] == 'fsd'
+
+
 def invite_user(client, user, server):
-    return client.post('/servers/invite_user', data=json.dumps(dict(
+    return client.post('/server/invite_user', data=json.dumps(dict(
         server=server,
         user=user
     )))
@@ -38,7 +45,7 @@ def connect_socket(app, user_client):
 
 
 def test_create_server__unauthorized(client):
-    res = client.post('/servers/create_server', data=json.dumps(dict(
+    res = client.post('/server/create_server', data=json.dumps(dict(
         server="gfd",
         password="hfh"
     )))
@@ -116,13 +123,13 @@ def test_get_servers__correct(auth_client):
 def test_get_servers__multiple_servers(auth_client):
     create_server(auth_client, "fds", "")
     create_server(auth_client, "fs", "")
-    res = auth_client.get('/servers/get_servers')
+    res = auth_client.get('/server/get_servers')
     assert res.status_code == 200
     assert len(json.loads(res.data)) == 2
 
 
 def test_get_servers_unauthorized(client):
-    res = client.get('/servers/get_servers')
+    res = client.get('/server/get_servers')
     assert res.status_code == 401
 
 

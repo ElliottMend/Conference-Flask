@@ -2,7 +2,7 @@ import pytest
 from conftest import client, app, auth_client, auth_socketio_client
 from flask_socketio import SocketIOTestClient
 from tests.test_servers import create_server, get_servers
-from flaskr.servers import socketio, check_user_access
+from flaskr.servers import socketio
 import json
 from datetime import datetime
 from werkzeug import exceptions
@@ -12,12 +12,6 @@ def get_messages(client, server):
     return client.get('/chat/get_messages', data=json.dumps(dict(
         server=server
     )))
-
-
-def test_check_user_access__correct(auth_client):
-    create_server(auth_client, "fsd", "")
-    res = check_user_access("fsd")
-    assert res[0] == 'fsd'
 
 
 def test_get_messages__correct(auth_client):

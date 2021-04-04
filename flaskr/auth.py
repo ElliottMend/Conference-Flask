@@ -74,7 +74,7 @@ def login():
 @bp.route("/verify", methods=["GET"])
 @login_required
 def verify():
-    return 200
+    return "User Authenticated", 200
 
 
 @ bp.route('/logout', methods=["GET"])
